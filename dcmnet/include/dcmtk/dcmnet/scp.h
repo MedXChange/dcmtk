@@ -1041,7 +1041,7 @@ protected:
    *                               DIMSE command which is sent to the other DICOM application
    *  @return Returns EC_Normal if sending request was successful, an error code otherwise
    */
-  OFCondition sendDIMSEMessage(const T_ASC_PresentationContextID presID,
+  virtual OFCondition sendDIMSEMessage(const T_ASC_PresentationContextID presID,
                                T_DIMSE_Message *message,
                                DcmDataset *dataObject,
                                DcmDataset *statusDetail = NULL,
@@ -1068,7 +1068,7 @@ protected:
    *                            setDIMSETimeout()).
    *  @return EC_Normal if command could be received successfully, an error code otherwise
    */
-  OFCondition receiveDIMSECommand(T_ASC_PresentationContextID *presID,
+  virtual OFCondition receiveDIMSECommand(T_ASC_PresentationContextID *presID,
                                   T_DIMSE_Message *message,
                                   DcmDataset **statusDetail,
                                   DcmDataset **commandSet = NULL,
@@ -1085,7 +1085,7 @@ protected:
    *                            has to be deleted by the caller.
    *  @return EC_Normal if dataset could be received successfully, an error code otherwise
    */
-  OFCondition receiveDIMSEDataset(T_ASC_PresentationContextID *presID,
+  virtual OFCondition receiveDIMSEDataset(T_ASC_PresentationContextID *presID,
                                   DcmDataset **dataObject);
 
   /** Receive one C-STORE request dataset via network from another DICOM application and
@@ -1099,7 +1099,7 @@ protected:
    *  @param filename    [in]    Name of the file that is created to store the received dataset
    *  @return EC_Normal if dataset could be received successfully, an error code otherwise
    */
-  OFCondition receiveSTORERequestDataset(T_ASC_PresentationContextID *presID,
+  virtual OFCondition receiveSTORERequestDataset(T_ASC_PresentationContextID *presID,
                                          T_DIMSE_C_StoreRQ &reqMessage,
                                          const OFString &filename);
 
@@ -1133,7 +1133,7 @@ protected:
   static void callbackRECEIVEProgress(void *callbackContext,
                                       unsigned long byteCount);
 
-private:
+protected:
 
   /// Current association run by this SCP
   T_ASC_Association *m_assoc;
