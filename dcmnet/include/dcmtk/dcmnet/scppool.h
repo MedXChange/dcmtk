@@ -232,6 +232,8 @@ private:
   OFList<DcmBaseSCPWorker*> m_workersBusy;
   /// List of all workers being idle, i.e.\ not running a connection
   OFList<DcmBaseSCPWorker*> m_workersIdle;
+  /// List of all completed threads
+  OFList<DcmBaseSCPWorker*> m_workersCompleted;
 
   /// SCP configuration to be used by pool and all workers
   DcmSCPConfig m_cfg;
@@ -251,6 +253,8 @@ private:
 
   /// Current run mode of pool
   runmode m_runMode;
+    
+  void cleanupCompletedThreads();
 };
 
 /** Implementation of DICOM SCP server pool. The pool waits for incoming

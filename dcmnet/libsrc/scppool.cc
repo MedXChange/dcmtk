@@ -35,6 +35,7 @@ DcmBaseSCPPool::DcmBaseSCPPool()
   : m_criticalSection(),
     m_workersBusy(),
     m_workersIdle(),
+    m_workersCompleted(),
     m_cfg(),
     m_maxWorkers(5),
     m_runMode( LISTEN )
@@ -67,6 +68,9 @@ OFCondition DcmBaseSCPPool::listen()
   /* As long as all is fine (or we have been to busy handling last connection request) keep listening */
   while ( m_runMode == LISTEN && ( cond.good() || (cond == NET_EC_SCPBusy) ) )
   {
+    // clean up any completed threads
+    cleanupCompletedThreads();
+
     // Reset status
     cond = EC_Normal;
     // Every incoming connection is handled in a new association object
@@ -126,17 +130,44 @@ OFCondition DcmBaseSCPPool::listen()
   {
     m_criticalSection.unlock();
     (*it)->join();
-    delete *it;
     m_criticalSection.lock();
   }
 
   m_workersBusy.clear();
+
   m_criticalSection.unlock();
+
+  cleanupCompletedThreads();
 
   /* In the end, clean up the rest of the memory and drop network */
   ASC_dropNetwork(&network);
 
   return EC_Normal;
+}
+
+void DcmBaseSCPPool::cleanupCompletedThreads()
+{
+
+  m_criticalSection.lock();
+  // iterate over worker threads in the list, join their threads and delete them.
+  for
+  (
+    OFListIterator( DcmBaseSCPPool::DcmBaseSCPWorker* ) it = m_workersCompleted.begin();
+    it != m_workersCompleted.end();
+    ++it
+  )
+  {
+    m_criticalSection.unlock();
+    (*it)->join();
+    
+    delete *it; 
+    
+    m_criticalSection.lock();
+  }
+
+  m_workersCompleted.clear();
+
+  m_criticalSection.unlock();
 }
 
 void DcmBaseSCPPool::stopAfterCurrentAssociations()
@@ -279,8 +310,7 @@ void DcmBaseSCPPool::notifyThreadExit(DcmBaseSCPPool::DcmBaseSCPWorker* thread,
   {
     DCMNET_DEBUG("DcmBaseSCPPool: Worker thread #" << thread->threadID() << " exited with error: " << result.text());
     m_workersBusy.remove(thread);
-    delete thread;
-    thread = NULL;
+    m_workersCompleted.push_back(thread);
   }
   m_criticalSection.unlock();
 }
